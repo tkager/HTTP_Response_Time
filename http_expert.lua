@@ -4,7 +4,7 @@
 --- Last modified 3/11/16
 
 --[[
-The purpose of this script is to act as a simple http response times. In this capacity, it measure the time differential between the initial request and HTTP response frames.
+The purpose of this script is to act as a simple http response time measurement tool. In summary, it measures the time delta between the initial request and HTTP response frames.
 
 - Usage
 tshark -R "http.request.method || http.response.code" -r "(filename)" -2 -X lua_script:http_expert.lua -q > (filename.csv)
