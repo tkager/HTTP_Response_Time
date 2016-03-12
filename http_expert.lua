@@ -7,7 +7,7 @@
 The purpose of this script is to act as a simple http response time measurement tool. In summary, it measures the time delta between the initial request and HTTP response frames.
 
 - Usage
-tshark -R "http.request.method || http.response.code" -r "(filename)" -2 -X lua_script:http_expert.lua -q > (filename.csv)
+tshark -r "(filename)" -2 -X lua_script:http_expert.lua -q > (filename.csv)
 
 filename = capture file
 filename.csv = destination csv. The output of this script is CSV for easy import into spreadsheet program such as Excel.
@@ -88,7 +88,7 @@ if http_request_method() then
 		http[request_frame][http_user_agent]=tostring(http_user_agent())
 	end
 
-else
+else if http_response_code() then
 	request_in=tostring(http_request_in())
 	http[request_in][http_reply_frame]=tostring(http_reply_frame())
 	http[request_in][http_response_code]=tostring(http_response_code())
@@ -99,6 +99,10 @@ else
 	else
 		http[request_in][http_cache_control]=tostring(http_cache_control()):gsub(',','')
 	end
+
+else
+	end
+
 
 end
 
