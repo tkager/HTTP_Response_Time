@@ -26,8 +26,11 @@ http = {}
 --- From request
 http_request_time=Field.new("frame.time")
 http_request_frame=Field.new("frame.number")
+client=Field.new("ip.src")
+server=Field.new("ip.dst")
 http_request_method=Field.new("http.request.method")
 http_request_version=Field.new("http.request.version")
+http_user_agent=Field.new("http.user_agent")
 http_host=Field.new("http.host")
 http_request_uri=Field.new("http.request.uri")
 http_data=Field.new("http")
@@ -41,13 +44,13 @@ http_time=Field.new("http.time")
 
 function tap.draw()
 --- Header Output. Needs to occur before main loop or, we will have header for each row!
-io.write("request frame", "," , "request time", ",", "request methood" , "," , "request version" , ",", "http host" , "," , "request uri" , "," , "request header fields" , "," , "response frame" , "," , "response code" , "," , "response time")
+io.write("request frame",",","request time",",","client",",","server",",","request methood",",","request version",",","http host",",","request uri",",","user agent",",","request header fields",",","response frame",",","response code",",","response time")
 io.write("\n") --- linespace after header
 
 --- Main Loop
 for k,v in pairs (http) do
 --- Optimal to combine these into a single IO write.
-io.write(tostring(k), "," , tostring(http[k][http_request_time]), "," , tostring(http[k][http_request_method]), "," , tostring(http[k][http_request_version]), "," , tostring(http[k][http_host]), "," , tostring(http[k][http_request_uri]), "," , tostring(http[k][http_request_header_fields]), ",")
+io.write(tostring(k),",",tostring(http[k][http_request_time]),",",tostring(http[k][client]),",",tostring(http[k][server]),",",tostring(http[k][http_request_method]),",",tostring(http[k][http_request_version]),",",tostring(http[k][http_host]),",",tostring(http[k][http_request_uri]),",",tostring(http[k][http_user_agent]),",",tostring(http[k][http_request_header_fields]),",")
 io.write(tostring(http[k][http_reply_frame]), "," , tostring(http[k][http_response_code]), "," , tostring(http[k][http_time]))
 io.write("\n") --- linespace after row
 
@@ -65,15 +68,24 @@ if http_request_method() then
 	request_frame=tostring(http_request_frame())
 	http[request_frame]={}
 	http[request_frame][http_request_time]=tostring(http_request_time()):gsub(',','')
+	http[request_frame][client]=tostring(client())
+	http[request_frame][server]=tostring(server())
 	http[request_frame][http_request_method]=tostring(http_request_method())
 	http[request_frame][http_request_version]=tostring(http_request_version())
 	http[request_frame][http_host]=tostring(http_host())
 	http[request_frame][http_request_uri]=tostring(http_request_uri())
-	--- Determine Request Header Fields. Method,URI and Version is counted as one field.
+
+	--- Determine Number of Request Header Fields. Method,URI and Version is counted as one field.
 	x=tostring(http_data())
 	_, count = string.gsub(x, "0d:0a", " ")
 	_, double_white = string.gsub(x, "0d:0a:0d:0a", " ")
 	http[request_frame][http_request_header_fields]=count - double_white - 1
+	--- Add user_agent if present within headers
+	if http_user_agent() == nil then
+		http[request_frame][http_user_agent]="none"
+	else
+		http[request_frame][http_user_agent]=tostring(http_user_agent())
+	end
 
 else
 	request_in=tostring(http_request_in())
