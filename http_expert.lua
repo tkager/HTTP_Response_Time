@@ -30,6 +30,8 @@ http_request_method=Field.new("http.request.method")
 http_request_version=Field.new("http.request.version")
 http_host=Field.new("http.host")
 http_request_uri=Field.new("http.request.uri")
+http_data=Field.new("http")
+http_request_header_fields=0
 
 --- From response
 http_reply_frame=Field.new("frame.number")
@@ -39,13 +41,13 @@ http_time=Field.new("http.time")
 
 function tap.draw()
 --- Header Output. Needs to occur before main loop or, we will have header for each row!
-io.write("request frame", "," , "request time", ",", "request methood" , "," , "request version" , ",", "http host" , "," , "request uri" , "," , "response frame" , "," , "response code" , "," , "response time")
+io.write("request frame", "," , "request time", ",", "request methood" , "," , "request version" , ",", "http host" , "," , "request uri" , "," , "request header fields" , "," , "response frame" , "," , "response code" , "," , "response time")
 io.write("\n") --- linespace after header
 
 --- Main Loop
 for k,v in pairs (http) do
 --- Optimal to combine these into a single IO write.
-io.write(tostring(k), "," , tostring(http[k][http_request_time]), "," , tostring(http[k][http_request_method]), "," , tostring(http[k][http_request_version]), "," , tostring(http[k][http_host]), "," , tostring(http[k][http_request_uri]), ",")
+io.write(tostring(k), "," , tostring(http[k][http_request_time]), "," , tostring(http[k][http_request_method]), "," , tostring(http[k][http_request_version]), "," , tostring(http[k][http_host]), "," , tostring(http[k][http_request_uri]), "," , tostring(http[k][http_request_header_fields]), ",")
 io.write(tostring(http[k][http_reply_frame]), "," , tostring(http[k][http_response_code]), "," , tostring(http[k][http_time]))
 io.write("\n") --- linespace after row
 
@@ -67,6 +69,11 @@ if http_request_method() then
 	http[request_frame][http_request_version]=tostring(http_request_version())
 	http[request_frame][http_host]=tostring(http_host())
 	http[request_frame][http_request_uri]=tostring(http_request_uri())
+	--- Determine Request Header Fields. Method,URI and Version is counted as one field.
+	x=tostring(http_data())
+	_, count = string.gsub(x, "0d:0a", " ")
+	_, double_white = string.gsub(x, "0d:0a:0d:0a", " ")
+	http[request_frame][http_request_header_fields]=count - double_white - 1
 
 else
 	request_in=tostring(http_request_in())
