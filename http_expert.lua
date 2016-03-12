@@ -40,18 +40,19 @@ http_request_header_fields=0
 http_reply_frame=Field.new("frame.number")
 http_request_in=Field.new("http.request_in")
 http_response_code=Field.new("http.response.code")
+http_cache_control=Field.new("http.cache_control")
 http_time=Field.new("http.time")
 
 function tap.draw()
 --- Header Output. Needs to occur before main loop or, we will have header for each row!
-io.write("request frame",",","request time",",","client",",","server",",","request methood",",","request version",",","http host",",","request uri",",","user agent",",","request header fields",",","response frame",",","response code",",","response time")
+io.write("request frame",",","request time",",","client",",","server",",","request methood",",","request version",",","http host",",","request uri",",","user agent",",","request header fields",",","response frame",",","response code",",","response time",",","cache control")
 io.write("\n") --- linespace after header
 
 --- Main Loop
 for k,v in pairs (http) do
 --- Optimal to combine these into a single IO write.
 io.write(tostring(k),",",tostring(http[k][http_request_time]),",",tostring(http[k][client]),",",tostring(http[k][server]),",",tostring(http[k][http_request_method]),",",tostring(http[k][http_request_version]),",",tostring(http[k][http_host]),",",tostring(http[k][http_request_uri]),",",tostring(http[k][http_user_agent]),",",tostring(http[k][http_request_header_fields]),",")
-io.write(tostring(http[k][http_reply_frame]), "," , tostring(http[k][http_response_code]), "," , tostring(http[k][http_time]))
+io.write(tostring(http[k][http_reply_frame]),",",tostring(http[k][http_response_code]),",",tostring(http[k][http_time]),",",tostring(http[k][http_cache_control]))
 io.write("\n") --- linespace after row
 
 end
@@ -92,6 +93,13 @@ else
 	http[request_in][http_reply_frame]=tostring(http_reply_frame())
 	http[request_in][http_response_code]=tostring(http_response_code())
 	http[request_in][http_time]=tostring(http_time())
+	--- Check for cache control
+	if http_cache_control() == nil then
+		http[request_in][http_cache_control]="none"
+	else
+		http[request_in][http_cache_control]=tostring(http_cache_control()):gsub(',','')
+	end
+
 end
 
 end --- end of tap_packet()
